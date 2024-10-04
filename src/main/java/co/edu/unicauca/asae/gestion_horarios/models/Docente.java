@@ -10,14 +10,10 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Getter @Setter @NoArgsConstructor
-public class Docente {
+public class Docente extends Persona {  // Hereda de Persona
     @Id
     private int id;
 
-    private String nombre;
-    private String apellido;
-    private String correo;
-
-    @ManyToOne(cascade = CascadeType.PERSIST)  // Agregar CascadeType.PERSIST para que la oficina se guarde automáticamente
+    @ManyToOne(cascade = CascadeType.PERSIST)  // Almacena la oficina automáticamente
     private Oficina oficina;
 }

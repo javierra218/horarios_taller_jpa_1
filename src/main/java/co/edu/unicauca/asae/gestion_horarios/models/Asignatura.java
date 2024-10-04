@@ -3,6 +3,7 @@ package co.edu.unicauca.asae.gestion_horarios.models;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import lombok.Getter;
 import lombok.Setter;
@@ -21,6 +22,6 @@ public class Asignatura {
     @Column(nullable = false)
     private String nombre;
 
-    @OneToMany(mappedBy = "asignatura")
+    @OneToMany(mappedBy = "asignatura", cascade = CascadeType.PERSIST)
     private List<Curso> cursos;
 }

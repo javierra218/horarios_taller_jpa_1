@@ -1,6 +1,5 @@
 package co.edu.unicauca.asae.gestion_horarios.models;
 
-
 import jakarta.persistence.Entity;
 import lombok.Getter;
 import lombok.Setter;

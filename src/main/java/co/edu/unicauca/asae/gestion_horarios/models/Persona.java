@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 @Entity
-@Inheritance(strategy = InheritanceType.JOINED)
+@Inheritance(strategy = InheritanceType.JOINED)  // Herencia por JOINED
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor
 public class Persona {
     @Id

@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.sql.Time;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @SpringBootApplication
 @Transactional
@@ -20,19 +22,16 @@ public class GestionHorariosApplication implements CommandLineRunner {
     private DocenteRepository docenteRepository;
 
     @Autowired
-    private OficinaRepository oficinaRepository;  // Añadido para manejar oficinas
+    private CursoRepository cursoRepository;
 
     @Autowired
-    private CursoRepository cursoRepository;
+    private FranjaHorariaRepository franjaHorariaRepository;
 
     @Autowired
     private AsignaturaRepository asignaturaRepository;
 
     @Autowired
-    private FranjaHorariaRepository franjaHorariaRepository;  // Añadido para manejar franjas horarias
-
-    @Autowired
-    private EspacioFisicoRepository espacioFisicoRepository;  // Añadido para manejar espacios físicos
+    private EspacioFisicoRepository espacioFisicoRepository;
 
     public static void main(String[] args) {
         SpringApplication.run(GestionHorariosApplication.class, args);
@@ -40,42 +39,55 @@ public class GestionHorariosApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        crearOficina();
-        crearDocente();
-        crearAsignatura();
-        crearCurso();
-        crearEspacioFisico();
-        crearFranjaHoraria();
-        
-        consultarDocentes();
-        consultarCursos();
+        StringBuilder log = new StringBuilder();
+
+        log.append(crearDocente()).append("\n");
+        log.append(crearEspacioFisico()).append("\n");  // Crear espacio físico antes de usarlo
+        log.append(crearCurso()).append("\n");
+        log.append(crearFranjaHoraria()).append("\n");
+        log.append(listarFranjasHorarias()).append("\n");
+        log.append(consultarFranjasPorDocente()).append("\n");
+        log.append(eliminarCurso()).append("\n");
+
+        // Al final de todos los procesos, imprimimos el log completo
+        System.out.println(log.toString());
     }
 
-    private void crearOficina() {
-        // Crear y guardar oficina
+    // (v 1.0) Crear docente
+    private String crearDocente() {
         Oficina oficina = new Oficina(1, "Oficina 1", "Edificio A");
-        oficinaRepository.save(oficina);
+        Docente docente = new Docente();
+        docente.setNombre("Juan");
+        docente.setApellido("Pérez");
+        docente.setCorreo("juan.perez@unicauca.edu.co");
+        docente.setOficina(oficina);
+
+        docenteRepository.save(docente);
+
+        return "Docente creado:\n" +
+               "ID: " + docente.getId() + "\n" +
+               "Nombre: " + docente.getNombre() + "\n" +
+               "Apellido: " + docente.getApellido() + "\n" +
+               "Correo: " + docente.getCorreo() + "\n" +
+               "Oficina: " + docente.getOficina().getNombre();
     }
 
-    private void crearDocente() {
-        // Obtener oficina existente
-        Oficina oficina = oficinaRepository.findById(1).orElse(null);
+    // (v 1.0) Crear espacio físico
+    private String crearEspacioFisico() {
+        EspacioFisico espacioFisico = new EspacioFisico();
+        espacioFisico.setId(1);
+        espacioFisico.setNombre("Aula 101");
+        espacioFisico.setCapacidad(40);
+        espacioFisicoRepository.save(espacioFisico);
 
-        if (oficina != null) {
-            Docente docente = new Docente();
-            docente.setNombre("Juan");
-            docente.setApellido("Pérez");
-            docente.setCorreo("juan.perez@unicauca.edu.co");
-            docente.setOficina(oficina);
-
-            docenteRepository.save(docente);
-        } else {
-            System.out.println("La oficina no fue encontrada.");
-        }
+        return "Espacio Físico creado:\n" +
+               "ID: " + espacioFisico.getId() + "\n" +
+               "Nombre: " + espacioFisico.getNombre() + "\n" +
+               "Capacidad: " + espacioFisico.getCapacidad();
     }
 
-    private void crearAsignatura() {
-        // Verificar si la asignatura ya está en la base de datos
+    // (v 1.0) Crear curso
+    private String crearCurso() {
         Asignatura asignatura = asignaturaRepository.findById(1).orElse(null);
         if (asignatura == null) {
             asignatura = new Asignatura();
@@ -84,87 +96,89 @@ public class GestionHorariosApplication implements CommandLineRunner {
             asignatura.setCodigo("MAT101");
             asignaturaRepository.save(asignatura);
         }
-    }
 
-    private void crearCurso() {
-        // Obtener la asignatura persistida
-        Asignatura asignatura = asignaturaRepository.findById(1).orElse(null);
+        Curso curso = new Curso();
+        curso.setId(1);
+        curso.setNombre("Matemáticas 101");
+        curso.setAsignatura(asignatura);
 
-        if (asignatura != null) {
-            Curso curso = new Curso();
-            curso.setId(1);
-            curso.setNombre("Matemáticas 101");
-            curso.setAsignatura(asignatura);
+        Docente docente = docenteRepository.findById(1).orElse(null);
+        if (docente != null) {
+            curso.setDocentes(Arrays.asList(docente));
+            cursoRepository.save(curso);
 
-            // Asignar un docente al curso
-            Docente docente = docenteRepository.findById(1).orElse(null);
-            if (docente != null) {
-                curso.setDocentes(Arrays.asList(docente));
-                cursoRepository.save(curso);
-            } else {
-                System.out.println("El docente no fue encontrado.");
-            }
-        } else {
-            System.out.println("La asignatura no fue encontrada.");
+            return "Curso creado:\n" +
+                   "ID: " + curso.getId() + "\n" +
+                   "Nombre: " + curso.getNombre() + "\n" +
+                   "Asignatura: " + asignatura.getNombre() + "\n" +
+                   "Docente asociado: " + docente.getNombre();
         }
+
+        return "Error al crear el curso. Docente no encontrado.";
     }
 
-    private void crearEspacioFisico() {
-        // Crear y guardar un espacio físico
-        EspacioFisico espacioFisico = new EspacioFisico();
-        espacioFisico.setId(1);
-        espacioFisico.setNombre("Aula 101");
-        espacioFisico.setCapacidad(30);
-        espacioFisicoRepository.save(espacioFisico);
-    }
+    // (v 1.0) Crear franja horaria
+    private String crearFranjaHoraria() {
+        Curso curso = cursoRepository.findById(1).orElse(null);
+        EspacioFisico espacioFisico = espacioFisicoRepository.findById(1).orElse(null);
 
-    private void crearFranjaHoraria() {
-    // Obtener el curso y espacio físico previamente creados
-    Curso curso = cursoRepository.findById(1).orElse(null);
-    EspacioFisico espacioFisico = espacioFisicoRepository.findById(1).orElse(null);
+        if (curso != null && espacioFisico != null) {
+            FranjaHoraria franjaHoraria = new FranjaHoraria();
+            franjaHoraria.setId(1);
+            franjaHoraria.setDia("Lunes");
+            franjaHoraria.setHoraInicio(Time.valueOf("08:00:00"));
+            franjaHoraria.setHoraFin(Time.valueOf("10:00:00"));
+            franjaHoraria.setCurso(curso);
+            franjaHoraria.setEspacioFisico(espacioFisico);
 
-    if (curso != null && espacioFisico != null) {
-        FranjaHoraria franjaHoraria = new FranjaHoraria();
-        franjaHoraria.setId(1);
-        franjaHoraria.setDia("Lunes");
-        // Convertir String a Time usando Time.valueOf()
-        franjaHoraria.setHoraInicio(Time.valueOf("08:00:00"));  // Convierte a Time
-        franjaHoraria.setHoraFin(Time.valueOf("10:00:00"));     // Convierte a Time
-        franjaHoraria.setCurso(curso);
-        franjaHoraria.setEspacioFisico(espacioFisico);
+            franjaHorariaRepository.save(franjaHoraria);
 
-        franjaHorariaRepository.save(franjaHoraria);
-    } else {
-        System.out.println("El curso o el espacio físico no fueron encontrados.");
-    }
-}
-
-    private void consultarDocentes() {
-        System.out.println("Consultando docentes...");
-
-        List<Docente> docentes = (List<Docente>) docenteRepository.findAll();
-        for (Docente docente : docentes) {
-            System.out.println("Docente ID: " + docente.getId());
-            System.out.println("Nombre: " + docente.getNombre() + " " + docente.getApellido());
-            System.out.println("Correo: " + docente.getCorreo());
-            System.out.println("Oficina: " + docente.getOficina().getNombre());
-            System.out.println("---- ---- ----");
+            return "Franja horaria creada:\n" +
+                   "ID: " + franjaHoraria.getId() + "\n" +
+                   "Día: " + franjaHoraria.getDia() + "\n" +
+                   "Hora Inicio: " + franjaHoraria.getHoraInicio() + "\n" +
+                   "Hora Fin: " + franjaHoraria.getHoraFin() + "\n" +
+                   "Curso: " + curso.getNombre() + "\n" +
+                   "Espacio Físico: " + espacioFisico.getNombre();
         }
+
+        return "Error al crear la franja horaria. Curso o espacio físico no encontrado.";
     }
 
-    private void consultarCursos() {
-        System.out.println("Consultando cursos...");
+    // (v 0.5) Listar franjas horarias
+    private String listarFranjasHorarias() {
+        List<FranjaHoraria> franjas = StreamSupport.stream(franjaHorariaRepository.findAll().spliterator(), false)
+                .collect(Collectors.toList());
 
-        List<Curso> cursos = (List<Curso>) cursoRepository.findAll();
-        for (Curso curso : cursos) {
-            System.out.println("Curso ID: " + curso.getId());
-            System.out.println("Nombre del curso: " + curso.getNombre());
-            System.out.println("Asignatura: " + curso.getAsignatura().getNombre());
-            System.out.println("Docentes: ");
-            for (Docente docente : curso.getDocentes()) {
-                System.out.println("  - " + docente.getNombre() + " " + docente.getApellido());
-            }
-            System.out.println("---- ---- ----");
+        StringBuilder listado = new StringBuilder("Listando Franjas Horarias:\n");
+        franjas.forEach(f -> listado.append("Franja ID: ").append(f.getId())
+                .append(" - Curso: ").append(f.getCurso().getNombre())
+                .append(" - Espacio Físico: ").append(f.getEspacioFisico().getNombre()).append("\n"));
+
+        return listado.toString();
+    }
+
+    // (v 1.0) Consultar franjas por docente
+    private String consultarFranjasPorDocente() {
+        Docente docente = docenteRepository.findById(1).orElse(null);
+        if (docente != null) {
+            List<FranjaHoraria> franjas = StreamSupport.stream(franjaHorariaRepository.findAll().spliterator(), false)
+                    .collect(Collectors.toList());
+
+            StringBuilder listado = new StringBuilder("Consultando Franjas Horarias para el Docente: " + docente.getNombre() + "\n");
+            franjas.forEach(f -> listado.append("Franja ID: ").append(f.getId())
+                    .append(" - Curso: ").append(f.getCurso().getNombre())
+                    .append(" - Espacio Físico: ").append(f.getEspacioFisico().getNombre()).append("\n"));
+
+            return listado.toString();
         }
+
+        return "Docente no encontrado.";
+    }
+
+    // (v 0.5) Eliminar curso
+    private String eliminarCurso() {
+        cursoRepository.deleteById(1);
+        return "Curso eliminado junto con las franjas horarias asociadas.";
     }
 }

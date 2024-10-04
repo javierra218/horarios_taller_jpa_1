@@ -3,6 +3,7 @@ package co.edu.unicauca.asae.gestion_horarios.models;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.FetchType;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.NoArgsConstructor;
@@ -18,9 +19,9 @@ public class FranjaHoraria {
     private Time horaInicio;
     private Time horaFin;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     private Curso curso;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)  // LAZY loading para espacio físico
     private EspacioFisico espacioFisico;
 }

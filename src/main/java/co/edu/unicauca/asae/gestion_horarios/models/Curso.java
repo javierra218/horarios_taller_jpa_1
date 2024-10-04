@@ -19,12 +19,12 @@ public class Curso {
 
     private String nombre;
 
-    @ManyToOne(cascade = CascadeType.PERSIST)  // Usamos cascada para persistir la asignatura si no existe
+    @ManyToOne(cascade = CascadeType.PERSIST)  // Se persiste la asignatura si no existe
     private Asignatura asignatura;
 
     @ManyToMany
     private List<Docente> docentes;
 
-    @OneToMany(mappedBy = "curso")
+    @OneToMany(mappedBy = "curso", cascade = CascadeType.ALL, orphanRemoval = true)  // Elimina franjas horarias asociadas
     private List<FranjaHoraria> franjasHorarias;
 }

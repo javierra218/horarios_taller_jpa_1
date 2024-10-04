@@ -19,7 +19,6 @@ public class Oficina {
     @Column(nullable = false)
     private String ubicacion;
 
-    // Constructor que faltaba
     public Oficina(int id, String nombre, String ubicacion) {
         this.id = id;
         this.nombre = nombre;
