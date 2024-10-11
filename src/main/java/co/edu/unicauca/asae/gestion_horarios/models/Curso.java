@@ -26,10 +26,10 @@ public class Curso {
 
     private String nombre;
 
-    @ManyToOne(cascade = CascadeType.PERSIST)
+    @ManyToOne(cascade = CascadeType.PERSIST) // Persiste la asignatura si no está guardada
     private Asignatura asignatura;
 
-    @ManyToMany
+    @ManyToMany(cascade = CascadeType.PERSIST) // Persistencia en cascada para Docente
     private List<Docente> docentes = new ArrayList<>();
 
     @OneToMany(mappedBy = "curso", cascade = CascadeType.ALL, orphanRemoval = true)

@@ -10,9 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.sql.Time;
 import java.util.ArrayList;
-import java.util.Arrays;
+
 import java.util.List;
-import java.util.stream.Collectors;
 
 @SpringBootApplication
 public class GestionHorariosApplication implements CommandLineRunner {
@@ -87,15 +86,16 @@ public class GestionHorariosApplication implements CommandLineRunner {
         Oficina oficina = new Oficina();
         oficina.setNombre("Oficina 1");
         oficina.setUbicacion("Edificio A");
-        oficinaRepository.save(oficina);
 
         Docente docente = new Docente();
         docente.setNombre("Juan");
         docente.setApellido("Pérez");
         docente.setCorreo("juan.perez@unicauca.edu.co");
-        docente.setOficina(oficina);
+        docente.setOficina(oficina); // Asignar la oficina al docente
 
-        docenteRepository.save(docente);
+        // Persistir el docente (esto también persistirá la oficina gracias a
+        // CascadeType.PERSIST)
+        docenteRepository.save(docente); // Única llamada a save
 
         return docente;
     }
@@ -112,23 +112,27 @@ public class GestionHorariosApplication implements CommandLineRunner {
 
     // Crear curso
     private Curso crearCurso(Docente docente) {
-        Asignatura asignatura = asignaturaRepository.findByCodigo("MAT101").orElse(null);
-        if (asignatura == null) {
-            asignatura = new Asignatura();
-            asignatura.setNombre("Matemáticas");
-            asignatura.setCodigo("MAT101");
-            asignaturaRepository.save(asignatura);
-        }
+        // Intentar recuperar la asignatura por su código
+        Asignatura asignatura = asignaturaRepository.findByCodigo("MAT101").orElseGet(() -> {
+            // Si no se encuentra, crear una nueva asignatura (pero no guardar manualmente)
+            Asignatura nuevaAsignatura = new Asignatura();
+            nuevaAsignatura.setCodigo("MAT101");
+            nuevaAsignatura.setNombre("Matemáticas");
+            return nuevaAsignatura;
+        });
 
+        // Crear el curso
         Curso curso = new Curso();
         curso.setNombre("Matemáticas 101");
-        curso.setAsignatura(asignatura);
+        curso.setAsignatura(asignatura); // Asignar la asignatura
 
-        // Usar una ArrayList modificable
+        // Asignar el docente al curso
         List<Docente> listaDocentes = new ArrayList<>();
         listaDocentes.add(docente);
         curso.setDocentes(listaDocentes);
 
+        // Guardar el curso (esto también guardará la asignatura en cascada si es
+        // necesario)
         cursoRepository.save(curso);
 
         return curso;
@@ -188,7 +192,7 @@ public class GestionHorariosApplication implements CommandLineRunner {
 
     // // Eliminar curso
     // private String eliminarCurso(Curso curso) {
-    //     cursoRepository.deleteById(curso.getId());
-    //     return "Curso eliminado junto con las franjas horarias asociadas.";
+    // cursoRepository.deleteById(curso.getId());
+    // return "Curso eliminado junto con las franjas horarias asociadas.";
     // }
 }

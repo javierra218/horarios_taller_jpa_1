@@ -8,10 +8,11 @@ import lombok.Setter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Getter @Setter @NoArgsConstructor
-public class Docente extends Persona {  // Hereda de Persona
-    // No declarar el campo 'id' aquí
+@Getter
+@Setter
+@NoArgsConstructor
+public class Docente extends Persona {
 
-    @ManyToOne(cascade = CascadeType.PERSIST)  // Almacena la oficina automáticamente
+    @ManyToOne(cascade = CascadeType.PERSIST)
     private Oficina oficina;
 }
