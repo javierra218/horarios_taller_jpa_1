@@ -2,6 +2,8 @@ package co.edu.unicauca.asae.gestion_horarios.models;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -14,6 +16,7 @@ import java.util.List;
 @Getter @Setter @NoArgsConstructor
 public class Asignatura {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
     @Column(nullable = false, unique = true)

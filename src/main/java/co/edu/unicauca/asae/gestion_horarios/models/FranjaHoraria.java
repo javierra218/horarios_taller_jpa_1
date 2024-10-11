@@ -12,11 +12,13 @@ import lombok.NoArgsConstructor;
 import java.sql.Time;
 
 @Entity
-@Getter @Setter @NoArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
 public class FranjaHoraria {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer  id;
+    private Integer id;
 
     private String dia;
     private Time horaInicio;
@@ -24,7 +26,6 @@ public class FranjaHoraria {
 
     @ManyToOne(fetch = FetchType.EAGER)
     private Curso curso;
-
-    @ManyToOne(fetch = FetchType.LAZY)  // LAZY loading para espacio físico
+    @ManyToOne(fetch = FetchType.LAZY) // LAZY loading para espacio físico
     private EspacioFisico espacioFisico;
 }

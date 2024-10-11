@@ -9,6 +9,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.sql.Time;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -45,37 +46,37 @@ public class GestionHorariosApplication implements CommandLineRunner {
 
         Docente docente = crearDocente();
         log.append("Docente creado:\n")
-           .append("ID: ").append(docente.getId()).append("\n")
-           .append("Nombre: ").append(docente.getNombre()).append("\n")
-           .append("Apellido: ").append(docente.getApellido()).append("\n")
-           .append("Correo: ").append(docente.getCorreo()).append("\n")
-           .append("Oficina: ").append(docente.getOficina().getNombre()).append("\n\n");
+                .append("ID: ").append(docente.getId()).append("\n")
+                .append("Nombre: ").append(docente.getNombre()).append("\n")
+                .append("Apellido: ").append(docente.getApellido()).append("\n")
+                .append("Correo: ").append(docente.getCorreo()).append("\n")
+                .append("Oficina: ").append(docente.getOficina().getNombre()).append("\n\n");
 
         EspacioFisico espacioFisico = crearEspacioFisico();
         log.append("Espacio Físico creado:\n")
-           .append("ID: ").append(espacioFisico.getId()).append("\n")
-           .append("Nombre: ").append(espacioFisico.getNombre()).append("\n")
-           .append("Capacidad: ").append(espacioFisico.getCapacidad()).append("\n\n");
+                .append("ID: ").append(espacioFisico.getId()).append("\n")
+                .append("Nombre: ").append(espacioFisico.getNombre()).append("\n")
+                .append("Capacidad: ").append(espacioFisico.getCapacidad()).append("\n\n");
 
         Curso curso = crearCurso(docente);
         log.append("Curso creado:\n")
-           .append("ID: ").append(curso.getId()).append("\n")
-           .append("Nombre: ").append(curso.getNombre()).append("\n")
-           .append("Asignatura: ").append(curso.getAsignatura().getNombre()).append("\n")
-           .append("Docente asociado: ").append(docente.getNombre()).append("\n\n");
+                .append("ID: ").append(curso.getId()).append("\n")
+                .append("Nombre: ").append(curso.getNombre()).append("\n")
+                .append("Asignatura: ").append(curso.getAsignatura().getNombre()).append("\n")
+                .append("Docente asociado: ").append(docente.getNombre()).append("\n\n");
 
         FranjaHoraria franjaHoraria = crearFranjaHoraria(curso, espacioFisico);
         log.append("Franja horaria creada:\n")
-           .append("ID: ").append(franjaHoraria.getId()).append("\n")
-           .append("Día: ").append(franjaHoraria.getDia()).append("\n")
-           .append("Hora Inicio: ").append(franjaHoraria.getHoraInicio()).append("\n")
-           .append("Hora Fin: ").append(franjaHoraria.getHoraFin()).append("\n")
-           .append("Curso: ").append(curso.getNombre()).append("\n")
-           .append("Espacio Físico: ").append(espacioFisico.getNombre()).append("\n\n");
+                .append("ID: ").append(franjaHoraria.getId()).append("\n")
+                .append("Día: ").append(franjaHoraria.getDia()).append("\n")
+                .append("Hora Inicio: ").append(franjaHoraria.getHoraInicio()).append("\n")
+                .append("Hora Fin: ").append(franjaHoraria.getHoraFin()).append("\n")
+                .append("Curso: ").append(curso.getNombre()).append("\n")
+                .append("Espacio Físico: ").append(espacioFisico.getNombre()).append("\n\n");
 
         log.append(listarFranjasHorarias()).append("\n");
         log.append(consultarFranjasPorDocente(docente)).append("\n");
-        log.append(eliminarCurso(curso)).append("\n");
+        // log.append(eliminarCurso(curso)).append("\n");
 
         // Imprimir el log completo
         System.out.println(log.toString());
@@ -122,7 +123,11 @@ public class GestionHorariosApplication implements CommandLineRunner {
         Curso curso = new Curso();
         curso.setNombre("Matemáticas 101");
         curso.setAsignatura(asignatura);
-        curso.setDocentes(Arrays.asList(docente));
+
+        // Usar una ArrayList modificable
+        List<Docente> listaDocentes = new ArrayList<>();
+        listaDocentes.add(docente);
+        curso.setDocentes(listaDocentes);
 
         cursoRepository.save(curso);
 
@@ -138,7 +143,14 @@ public class GestionHorariosApplication implements CommandLineRunner {
         franjaHoraria.setCurso(curso);
         franjaHoraria.setEspacioFisico(espacioFisico);
 
+        // Guardar la franja horaria directamente para obtener el ID
         franjaHorariaRepository.save(franjaHoraria);
+
+        // Agregar la franja horaria a la lista del curso
+        if (curso.getFranjasHorarias() == null) {
+            curso.setFranjasHorarias(new ArrayList<>());
+        }
+        curso.getFranjasHorarias().add(franjaHoraria);
 
         return franjaHoraria;
     }
@@ -162,7 +174,8 @@ public class GestionHorariosApplication implements CommandLineRunner {
     private String consultarFranjasPorDocente(Docente docente) {
         List<FranjaHoraria> franjas = franjaHorariaRepository.findByCursoDocentes_Id(docente.getId());
 
-        StringBuilder listado = new StringBuilder("Consultando Franjas Horarias para el Docente: " + docente.getNombre() + "\n");
+        StringBuilder listado = new StringBuilder(
+                "Consultando Franjas Horarias para el Docente: " + docente.getNombre() + "\n");
         franjas.forEach(f -> listado.append("Franja ID: ").append(f.getId())
                 .append(" - Curso: ").append(f.getCurso().getNombre())
                 .append(" - Día: ").append(f.getDia())
@@ -173,9 +186,9 @@ public class GestionHorariosApplication implements CommandLineRunner {
         return listado.toString();
     }
 
-    // Eliminar curso
-    private String eliminarCurso(Curso curso) {
-        cursoRepository.deleteById(curso.getId());
-        return "Curso eliminado junto con las franjas horarias asociadas.";
-    }
+    // // Eliminar curso
+    // private String eliminarCurso(Curso curso) {
+    //     cursoRepository.deleteById(curso.getId());
+    //     return "Curso eliminado junto con las franjas horarias asociadas.";
+    // }
 }
